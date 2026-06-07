@@ -15,6 +15,7 @@ public class CommentService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
 
+    // 댓글 작성
     public CommentCreateResponse createComment(Long postId, CommentCreateRequest request) {
         if (request.getComment() == null || request.getComment().isBlank()) {
             throw new IllegalArgumentException("no_content");
@@ -39,6 +40,7 @@ public class CommentService {
         );
     }
 
+    // 댓글 수정
     public CommentUpdateResponse updateComment(Long commentId, CommentUpdateRequest request) {
         if (request.getComment() == null || request.getComment().isBlank()) {
             throw new IllegalArgumentException("no_content");
@@ -63,6 +65,7 @@ public class CommentService {
         );
     }
 
+    // 댓글 삭제
     public CommentDeleteResponse deleteComment(Long commentId, CommentDeleteRequest request) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("comment_not_found"));
@@ -81,9 +84,10 @@ public class CommentService {
         );
     }
 
+    // 대댓글 작성
     public ReplyCreateResponse createReply(Long commentId, ReplyCreateRequest request) {
-        if (request.getRepliyComment() == null || request.getRepliyComment().isBlank()) {
-            throw new IllegalArgumentException("no_replycontent");
+        if (request.getReplyComment() == null || request.getReplyComment().isBlank()) {
+            throw new IllegalArgumentException("no_reply_content");
         }
         Comment parentComment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("comment_not_found"));
@@ -93,7 +97,7 @@ public class CommentService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("No_User"));
 
-        Comment reply = new Comment(parentComment.getPostId(), user.getId(), parentComment.getId(), request.getRepliyComment());
+        Comment reply = new Comment(parentComment.getPostId(), user.getId(), parentComment.getId(), request.getReplyComment());
         Comment savedReply = commentRepository.save(reply);
 
         return new ReplyCreateResponse(
@@ -106,8 +110,9 @@ public class CommentService {
         );
     }
 
+    // 대댓글 수정
     public ReplyCreateResponse updateReply(Long commentId, Long replyId, ReplyUpdateRequest request) {
-        if (request.getRepliyEditComment() == null || request.getRepliyEditComment().isBlank()) {
+        if (request.getReplyEditComment() == null || request.getReplyEditComment().isBlank()) {
             throw new IllegalArgumentException("no_reply_edit_content");
         }
         Comment reply = commentRepository.findById(replyId)
@@ -117,7 +122,7 @@ public class CommentService {
         }
         validateAuthor(reply, request.getUserId());
 
-        reply.update(request.getRepliyEditComment());
+        reply.update(request.getReplyEditComment());
         User user = userRepository.findById(reply.getAuthorId())
                 .orElseThrow(() -> new IllegalArgumentException("No_User"));
 
@@ -131,6 +136,7 @@ public class CommentService {
         );
     }
 
+    // 작성자 본인인지 확인
     private void validateAuthor(Comment comment, Long userId) {
         if (userId == null || !comment.getAuthorId().equals(userId)) {
             throw new IllegalArgumentException("not_author");

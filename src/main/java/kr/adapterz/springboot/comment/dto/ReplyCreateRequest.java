@@ -7,5 +7,5 @@ import lombok.NoArgsConstructor;
 @Getter
 public class ReplyCreateRequest {
     private Long userId;
-    private String repliyComment;
+    private String replyComment;
 }

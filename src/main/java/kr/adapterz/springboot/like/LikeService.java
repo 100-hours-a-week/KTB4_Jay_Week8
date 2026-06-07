@@ -15,6 +15,7 @@ public class LikeService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
 
+    // 좋아요 누르기
     public LikeResponse like(Long postId, LikeRequest request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("post_not_found"));
@@ -32,6 +33,7 @@ public class LikeService {
         return new LikeResponse(likeRepository.countByPostId(postId));
     }
 
+    // 좋아요 취소
     public LikeResponse unlike(Long postId, LikeRequest request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("post_not_found"));

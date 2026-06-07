@@ -21,12 +21,14 @@ public class CommentRepository {
         return Optional.ofNullable(store.get(commentId));
     }
 
+    // 게시글 id로 댓글과 대댓글 전체 조회
     public List<Comment> findByPostId(Long postId) {
         return store.values().stream()
                 .filter(comment -> comment.getPostId().equals(postId))
                 .toList();
     }
 
+    // 게시글 id로 일반 댓글만 조회
     public List<Comment> findParentCommentsByPostId(Long postId) {
         return store.values().stream()
                 .filter(comment -> comment.getPostId().equals(postId))
@@ -34,12 +36,14 @@ public class CommentRepository {
                 .toList();
     }
 
+    // 부모 댓글 id로 대댓글 조회
     public List<Comment> findRepliesByParentCommentId(Long parentCommentId) {
         return store.values().stream()
                 .filter(comment -> parentCommentId.equals(comment.getParentCommentId()))
                 .toList();
     }
 
+    // 삭제되지 않은 일반 댓글 개수 조회
     public Long countByPostId(Long postId) {
         return store.values().stream()
                 .filter(comment -> comment.getPostId().equals(postId))

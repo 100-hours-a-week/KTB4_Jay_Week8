@@ -84,6 +84,7 @@ public class PostService {
                 })
                 .toList();
     }
+    // 게시글 상세 조회
     public PostDetailResponse getPostDetail(Long postId){
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("post_not_found"));
@@ -159,6 +160,7 @@ public class PostService {
         );
     }
 
+    // 상세 조회에 들어갈 댓글 목록 조회
     private List<CommentDetailResponse> getComments(Long postId) {
         return commentRepository.findParentCommentsByPostId(postId).stream()
                 .map(comment -> {
@@ -178,6 +180,7 @@ public class PostService {
                 .toList();
     }
 
+    // 댓글에 달린 대댓글 목록 조회
     private List<ReplyCreateResponse> getReplies(Comment parentComment) {
         return commentRepository.findRepliesByParentCommentId(parentComment.getId()).stream()
                 .filter(reply -> !reply.isDeleted())

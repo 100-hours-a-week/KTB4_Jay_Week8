@@ -24,6 +24,7 @@ public class LikeRepository {
                 .findFirst();
     }
 
+    // 같은 게시글에 이미 좋아요 눌렀는지 확인
     public boolean existsByPostIdAndUserId(Long postId, Long userId) {
         return findByPostIdAndUserId(postId, userId).isPresent();
     }
@@ -32,6 +33,7 @@ public class LikeRepository {
         store.remove(like.getId());
     }
 
+    // 게시글 id로 좋아요 개수 조회
     public Long countByPostId(Long postId) {
         return store.values().stream()
                 .filter(like -> like.getPostId().equals(postId))
