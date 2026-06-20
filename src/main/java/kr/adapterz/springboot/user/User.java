@@ -1,25 +1,49 @@
 package kr.adapterz.springboot.user;
 
+import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
+@Entity
+@Table(
+        name = "users",
+        uniqueConstraints = {
+                // User 테이블에서 UNIQUE 설정은 email, nickname 두 개에 들어가 있음
+                @UniqueConstraint(name = "uk_users_email", columnNames = "email"),
+                @UniqueConstraint(name = "uk_users_nickname", columnNames = "nickname")
+        })
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
-    @Setter
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long id;
 
+    @Column(nullable = false)
     private String email;
+
+    @Column(nullable = false)
     private String password;
+
+    @Column(name = "profile_image")
     private String profileImage;
+
+    @Column(nullable = false, length = 10)
     private String nickname;
-    private Boolean deleted;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     public User(String email, String password, String nickname, String profileImage){
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.profileImage = profileImage;
-        this.deleted = false;
+        this.deletedAt = null;
     }
 
     // 회원정보(닉네임, 프로필 이미지) 수정
@@ -35,10 +59,10 @@ public class User {
 
     //사용자 탈퇴
     public void delete(){
-        this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 
     public boolean isDeleted(){
-        return this.deleted;
+        return this.deletedAt != null;
     }
 }

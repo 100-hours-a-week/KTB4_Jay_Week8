@@ -1,5 +1,6 @@
 package kr.adapterz.springboot.user;
 
+import org.springframework.transaction.annotation.Transactional;
 import kr.adapterz.springboot.global.exception.UserNotFoundException;
 import kr.adapterz.springboot.global.exception.BadRequestException;
 import kr.adapterz.springboot.global.exception.ConflictException;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserService {
     private final UserRepository userRepository;
 
@@ -22,11 +24,11 @@ public class UserService {
                         user.getEmail(),
                         user.getNickname(),
                         user.getProfileImage(),
-                        user.getDeleted()
+                        user.isDeleted()
                 ))
                 .toList();
     }
-
+    @Transactional
     public RegisterResponse register(RegisterRequest request) {
         if (request.getEmail() == null || request.getEmail().isBlank()){
             throw new BadRequestException("empty_email");
@@ -76,6 +78,7 @@ public class UserService {
         );
     }
 
+    @Transactional
     public UserUpdateResponse update(UserUpdateRequest request){
         if (request.getNickname() == null || request.getNickname().isBlank()){
             throw new BadRequestException("empty_nickname");
@@ -84,7 +87,7 @@ public class UserService {
             throw new BadRequestException("empty_profileImage");
         }
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new UserNotFoundException());
+                .orElseThrow(UserNotFoundException::new);
 
         if (!user.getNickname().equals(request.getNickname())
                 && userRepository.existsByNickname(request.getNickname())) {
@@ -98,20 +101,20 @@ public class UserService {
                 user.getProfileImage()
         );
     }
-
+    @Transactional
     public void deleteUser(UserDeleteRequest request) {
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new UserNotFoundException());
+                .orElseThrow(UserNotFoundException::new);
 
         user.delete();
     }
-
+    @Transactional
     public void updatePass(UserUpdatePassRequest request){
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(()-> new UserNotFoundException());
+                .orElseThrow(UserNotFoundException::new);
 
-        if (user.getDeleted()){
+        if (user.isDeleted()){
             throw new BadRequestException("deleted_user");
         }
         if (request.getNewpassword() == null || request.getNewpassword().isBlank()) {

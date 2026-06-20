@@ -50,7 +50,7 @@ public class PostController {
             @PathVariable Long postId,
             @RequestBody DeletePostRequest request
     ) {
-        postService.deletePost(postId, request);
+        postService.deletePost(postId, request  );
 
         return ResponseEntity.noContent().build();
     }

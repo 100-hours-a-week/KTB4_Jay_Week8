@@ -37,7 +37,7 @@ public class PostService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new NotFoundException("user_not_found"));
         Post post = new Post(
-            user.getId(),
+                user,
                 request.getTitle(),
                 request.getContent()
         );
@@ -57,7 +57,7 @@ public class PostService {
         return posts.stream()
                 .filter(post -> !post.isDeleted())
                 .map(post -> {
-                    User author = userRepository.findById(post.getAuthorId())
+                    User author = userRepository.findById(post.getAuthor().getId())
                             .orElseThrow(() -> new NotFoundException("user_not_found"));
                     if (post.isBlinded()) {
                         return PostListResponse.builder()
@@ -96,7 +96,7 @@ public class PostService {
         if (post.isDeleted()){
             throw new NotFoundException("post_not_found");
         }
-        User author = userRepository.findById(post.getAuthorId())
+        User author = userRepository.findById(post.getAuthor().getId())
                 .orElseThrow(() -> new NotFoundException("user_not_found"));
 
         if (!post.isBlinded()) {
@@ -159,7 +159,7 @@ public class PostService {
         }
         Post post = postRepository.findById(postId)
                 .orElseThrow(()->new NotFoundException("post_not_found"));
-        User user = userRepository.findById(post.getAuthorId())
+        User user = userRepository.findById(post.getAuthor().getId())
                 .orElseThrow(()->new NotFoundException("user_not_found"));
         validateAuthor(post, request.getUserId());
         post.update(request.getTitle(), request.getContent());
@@ -179,7 +179,7 @@ public class PostService {
     private List<CommentDetailResponse> getComments(Long postId) {
         return commentRepository.findParentCommentsByPostId(postId).stream()
                 .map(comment -> {
-                    User author = userRepository.findById(comment.getAuthorId())
+                    User author = userRepository.findById(comment.getAuthor().getId())
                             .orElseThrow(() -> new NotFoundException("user_not_found"));
                     return new CommentDetailResponse(
                             comment.getId(),
@@ -200,7 +200,7 @@ public class PostService {
         return commentRepository.findRepliesByParentCommentId(parentComment.getId()).stream()
                 .filter(reply -> !reply.isDeleted())
                 .map(reply -> {
-                    User author = userRepository.findById(reply.getAuthorId())
+                    User author = userRepository.findById(reply.getAuthor().getId())
                             .orElseThrow(() -> new NotFoundException("user_not_found"));
                     return new ReplyCreateResponse(
                             reply.getId(),
@@ -214,7 +214,7 @@ public class PostService {
                 .toList();
     }
     private void validateAuthor(Post post, Long userId) {
-        if (userId == null || !post.getAuthorId().equals(userId)) {
+        if (!post.getAuthor().getId().equals(userId)) {
             throw new ForbiddenException();
         }
     }

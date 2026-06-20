@@ -1,34 +1,65 @@
 package kr.adapterz.springboot.post;
 
+import jakarta.persistence.*;
+import kr.adapterz.springboot.user.User;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-
+@Entity
+@Table(
+        name = "posts",
+        indexes = {
+                @Index(name = "index_posts_authorId_createdAt", columnList = "author_id,created_at"),
+                @Index(name = "index_posts_created_at", columnList = "created_at")
+        }
+)
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Post {
-    @Setter
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "post_id")
     private Long id;
 
-    private final Long authorId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
+
+    @Column(nullable = false)
     private String title;
+
+    @Column(nullable = false)
     private String content;
-    private int viewCount;
+
+    @Column(name = "view_count", nullable = false)
+    private Long viewCount;
+
+    @Column(nullable = false)
     private boolean blinded;
-    private final LocalDateTime createdAt;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    private boolean deleted;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(nullable = false)
     private boolean edited;
 
-    public Post(Long authorId,String title, String content){
-        this.authorId = authorId;
+    public Post(User author, String title, String content){
+        this.author = author;
         this.title = title;
         this.content = content;
-        this.viewCount = 0;
+        this.viewCount = 0L;
         this.blinded = false;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = null;
-        this.deleted = false;
+        this.deletedAt = null;
         this.edited = false;
     }
 
@@ -50,8 +81,11 @@ public class Post {
     }
 
     public void delete(){
-        this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 
+    public boolean isDeleted(){
+        return this.deletedAt != null;
+    }
 
 }
