@@ -32,7 +32,7 @@ public class User {
     @Column(name = "profile_image")
     private String profileImage;
 
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 20)
     private String nickname;
 
     @Column(name = "deleted_at")
@@ -57,9 +57,10 @@ public class User {
         this.password = newPassword;
     }
 
-    //사용자 탈퇴
-    public void delete(){
+    public void delete() {
         this.deletedAt = LocalDateTime.now();
+        this.email = "deleted_" + this.id + "_" + this.email;
+        this.nickname = "deleted_user_" + this.id;
     }
 
     public boolean isDeleted(){

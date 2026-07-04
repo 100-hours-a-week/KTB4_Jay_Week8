@@ -6,6 +6,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 public class ReplyUpdateRequest {
-    private Long userId;
     private String replyEditComment;
 }

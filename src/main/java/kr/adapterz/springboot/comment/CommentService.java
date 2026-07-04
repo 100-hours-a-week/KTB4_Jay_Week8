@@ -22,13 +22,17 @@ public class CommentService {
 
     // 댓글 작성
     @Transactional
-    public CommentCreateResponse createComment(Long postId, CommentCreateRequest request) {
+    public CommentCreateResponse createComment(
+            Long currentUserId,
+            Long postId,
+            CommentCreateRequest request
+    ){
         if (request.getComment() == null || request.getComment().isBlank()) {
             throw new BadRequestException("no_content");
         }
         Post post = postReader.getActivePost(postId);
         post.commentIncrease();
-        User user = userReader.getActiveUser(request.getUserId());
+        User user = userReader.getActiveUser(currentUserId);
 
         Comment comment = new Comment(post, user, null, request.getComment());
         Comment savedComment = commentRepository.save(comment);
@@ -45,7 +49,11 @@ public class CommentService {
 
     // 댓글 수정
     @Transactional
-    public CommentUpdateResponse updateComment(Long commentId, CommentUpdateRequest request) {
+    public CommentUpdateResponse updateComment(
+            Long currentUserId,
+            Long commentId,
+            CommentUpdateRequest request
+    ){
         if (request.getComment() == null || request.getComment().isBlank()) {
             throw new BadRequestException("no_content");
         }
@@ -54,10 +62,10 @@ public class CommentService {
         if (comment.isDeleted() || comment.isReply()) {
             throw new NotFoundException("comment_not_found");
         }
-        validateAuthor(comment, request.getUserId());
+        validateAuthor(comment, currentUserId);
 
         comment.update(request.getComment());
-        User user = userReader.getActiveUser(request.getUserId());
+        User user = userReader.getActiveUser(currentUserId);
         return new CommentUpdateResponse(
                 comment.getId(),
                 user.getId(),
@@ -70,13 +78,16 @@ public class CommentService {
 
     // 댓글 삭제
     @Transactional
-    public CommentDeleteResponse deleteComment(Long commentId, CommentDeleteRequest request) {
+    public CommentDeleteResponse deleteComment(
+            Long currentUserId,
+            Long commentId
+    ){
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NotFoundException("comment_not_found"));
         if (comment.isDeleted()) {
             throw new NotFoundException("comment_not_found");
         }
-        validateAuthor(comment, request.getUserId());
+        validateAuthor(comment, currentUserId);
         Post post = comment.getPost();
         comment.delete();
         if (!comment.isReply()){
@@ -94,7 +105,11 @@ public class CommentService {
 
     // 대댓글 작성
     @Transactional
-    public ReplyCreateResponse createReply(Long commentId, ReplyCreateRequest request) {
+    public ReplyCreateResponse createReply(
+            Long currentUserId,
+            Long commentId,
+            ReplyCreateRequest request
+    ) {
         if (request.getReplyComment() == null || request.getReplyComment().isBlank()) {
             throw new BadRequestException("no_reply_content");
         }
@@ -103,7 +118,7 @@ public class CommentService {
         if (parentComment.isDeleted() || parentComment.isReply()) {
             throw new NotFoundException("comment_not_found");
         }
-        User user = userReader.getActiveUser(request.getUserId());
+        User user = userReader.getActiveUser(currentUserId);
 
         // 생성자에 넣기 위한 post 생성
         Post post = parentComment.getPost();
@@ -123,7 +138,12 @@ public class CommentService {
 
     // 대댓글 수정
     @Transactional
-    public ReplyCreateResponse updateReply(Long commentId, Long replyId, ReplyUpdateRequest request) {
+    public ReplyCreateResponse updateReply(
+            Long currentUserId,
+            Long commentId,
+            Long replyId,
+            ReplyUpdateRequest request
+    ) {
         if (request.getReplyEditComment() == null || request.getReplyEditComment().isBlank()) {
             throw new BadRequestException("no_reply_edit_content");
         }
@@ -132,10 +152,10 @@ public class CommentService {
         if (reply.isDeleted() || !commentId.equals(reply.getParentComment().getId())) {
             throw new NotFoundException("reply_not_found");
         }
-        validateAuthor(reply, request.getUserId());
+        validateAuthor(reply, currentUserId);
 
         reply.update(request.getReplyEditComment());
-        User user = userReader.getActiveUser(request.getUserId());
+        User user = userReader.getActiveUser(currentUserId);
 
         return new ReplyCreateResponse(
                 reply.getId(),

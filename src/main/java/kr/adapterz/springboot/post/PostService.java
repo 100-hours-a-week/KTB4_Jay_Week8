@@ -35,8 +35,11 @@ public class PostService {
     private final PostReader postReader;
 
     @Transactional
-    public PostResponse post(PostRequest request){
-        User user = userReader.getActiveUser(request.getUserId());
+    public PostResponse createPost(
+            Long currentUserId,
+            PostRequest request
+    ){
+        User user = userReader.getActiveUser(currentUserId);
         Post post = new Post(
                 user,
                 request.getTitle(),
@@ -139,25 +142,28 @@ public class PostService {
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .likeCount(likeRepository.countByPost_Id(postId))
-                .viewCount((long) post.getViewCount())
+                .viewCount(post.getViewCount())
                 .commentCount(post.getCommentCount())
                 .comments(getComments(postId))
                 .build();
     }
 
     @Transactional
-    public void deletePost(Long postId, DeletePostRequest request){
+    public void deletePost(
+            Long currentUserId,
+            Long postId
+    ){
         Post post = postReader.getActivePost(postId);
-        validateAuthor(post, request.getUserId());
+        validateAuthor(post, currentUserId);
 
         post.delete();
     }
 
     @Transactional
-    public UpdatePostResponse updatePost(Long postId,UpdatePostRequest request){
+    public UpdatePostResponse updatePost(Long currentUserId, Long postId,UpdatePostRequest request){
         Post post = postReader.getActivePost(postId);
         User user = post.getAuthor();
-        validateAuthor(post, request.getUserId());
+        validateAuthor(post, currentUserId);
         post.update(request.getTitle(), request.getContent());
 
         return new UpdatePostResponse(
@@ -210,8 +216,8 @@ public class PostService {
                 .toList();
     }
 
-    private void validateAuthor(Post post, Long userId) {
-        if (!post.getAuthor().getId().equals(userId)) {
+    private void validateAuthor(Post post, Long currentUserId) {
+        if (!post.getAuthor().getId().equals(currentUserId)) {
             throw new ForbiddenException();
         }
     }

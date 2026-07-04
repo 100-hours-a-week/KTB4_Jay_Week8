@@ -10,10 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DraftSaveRequest {
-
-    @NotNull(message = "empty_user_id")
-    private Long userId;
-
     private String title;
 
     private String content;

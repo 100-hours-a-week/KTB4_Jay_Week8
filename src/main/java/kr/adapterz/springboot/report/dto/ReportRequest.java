@@ -8,6 +8,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Getter
 public class ReportRequest {
-    private Long userId;
     private String reason;
 }

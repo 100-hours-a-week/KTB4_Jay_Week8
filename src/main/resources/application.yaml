@@ -21,3 +21,7 @@ logging:
   level:
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace
+
+jwt:
+  secret: "adapterz-spring-security-jwt-secret-key-for-practice-123456789"
+  access-token-expiration-millis: 3600000

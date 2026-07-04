@@ -6,6 +6,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 public class CommentCreateRequest {
-    private Long userId;
     private String comment;
 }

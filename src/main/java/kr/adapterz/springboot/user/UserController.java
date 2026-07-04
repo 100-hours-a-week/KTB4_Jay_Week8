@@ -2,10 +2,12 @@ package kr.adapterz.springboot.user;
 
 import jakarta.validation.Valid;
 import kr.adapterz.springboot.global.ApiResponse;
+import kr.adapterz.springboot.global.security.CustomUserPrincipal;
 import kr.adapterz.springboot.user.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,9 +52,13 @@ public class UserController {
 
     @PatchMapping("/me")
     public ResponseEntity<ApiResponse<UserUpdateResponse>> updateUser(
+            @AuthenticationPrincipal CustomUserPrincipal customUserPrincipal,
             @RequestBody UserUpdateRequest request
     ){
-        UserUpdateResponse response = userService.update(request);
+        UserUpdateResponse response = userService.update(
+                customUserPrincipal.getUserId(),
+                request
+        );
 
         return ResponseEntity.ok(
                 new ApiResponse<>("user_information_update_success", response)
@@ -61,18 +67,22 @@ public class UserController {
 
     @DeleteMapping("/me")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
-            @RequestBody UserDeleteRequest request
+            @AuthenticationPrincipal CustomUserPrincipal customUserPrincipal
     ){
-        userService.deleteUser(request);
+        userService.deleteUser(customUserPrincipal.getUserId());
 
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/me/password")
     public ResponseEntity<ApiResponse<Void>> updateUserPass(
+            @AuthenticationPrincipal CustomUserPrincipal customUserPrincipal,
             @RequestBody UserUpdatePassRequest request
     ){
-        userService.updatePass(request);
+        userService.updatePass(
+                customUserPrincipal.getUserId(),
+                request
+        );
 
         return ResponseEntity.ok(new ApiResponse<>("change_password_success", null));
     }

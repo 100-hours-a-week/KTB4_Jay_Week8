@@ -2,6 +2,7 @@ package kr.adapterz.springboot.post;
 
 import jakarta.validation.Valid;
 import kr.adapterz.springboot.global.ApiResponse;
+import kr.adapterz.springboot.global.security.CustomUserPrincipal;
 import kr.adapterz.springboot.post.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -10,9 +11,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RequestMapping("/posts")
 @RequiredArgsConstructor
@@ -22,10 +22,11 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<PostResponse>> post(
+    public ResponseEntity<ApiResponse<PostResponse>> createPost(
+            @AuthenticationPrincipal CustomUserPrincipal customUserPrincipal,
             @Valid @RequestBody PostRequest request
     ){
-        PostResponse response = postService.post(request);
+        PostResponse response = postService.createPost(customUserPrincipal.getUserId(), request);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>("post_created", response));
@@ -55,20 +56,28 @@ public class PostController {
 
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(
-            @PathVariable Long postId,
-            @RequestBody DeletePostRequest request
+            @AuthenticationPrincipal CustomUserPrincipal customUserPrincipal,
+            @PathVariable Long postId
     ) {
-        postService.deletePost(postId, request  );
+        postService.deletePost(
+                customUserPrincipal.getUserId(),
+                postId
+        );
 
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{postId}")
     public ResponseEntity<ApiResponse<UpdatePostResponse>> updatePost(
+            @AuthenticationPrincipal CustomUserPrincipal customUserPrincipal,
             @PathVariable Long postId,
             @Valid @RequestBody UpdatePostRequest request
             ){
-        UpdatePostResponse response = postService.updatePost(postId, request);
+        UpdatePostResponse response = postService.updatePost(
+                customUserPrincipal.getUserId(),
+                postId,
+                request
+        );
         return ResponseEntity.ok()
                 .body(new ApiResponse<>("post_updated", response));
     }

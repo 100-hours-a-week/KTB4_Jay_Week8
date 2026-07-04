@@ -43,21 +43,22 @@ public class ReportServiceTest {
                 "test_content"
         ));
 
-        User user1 = userRepository.save(new User("user1@adapterz.kr", "1234", "user1", null));
-        User user2 = userRepository.save(new User("user2@adapterz.kr", "1234", "user2", null));
-        User user3 = userRepository.save(new User("user3@adapterz.kr", "1234", "user3", null));
-        User user4 = userRepository.save(new User("user4@adapterz.kr", "1234", "user4", null));
-        User user5 = userRepository.save(new User("user5@adapterz.kr", "1234", "user5", null));
+        userRepository.save(new User("user1@adapterz.kr", "1234", "user1", null));
+        userRepository.save(new User("user2@adapterz.kr", "1234", "user2", null));
+        userRepository.save(new User("user3@adapterz.kr", "1234", "user3", null));
+        userRepository.save(new User("user4@adapterz.kr", "1234", "user4", null));
+        userRepository.save(new User("user5@adapterz.kr", "1234", "user5", null));
 
         // when
-        reportService.reportPost(post.getId(), new ReportRequest(user1.getId(), "부적절한 게시글"));
-        reportService.reportPost(post.getId(), new ReportRequest(user2.getId(), "부적절한 게시글"));
-        reportService.reportPost(post.getId(), new ReportRequest(user3.getId(), "부적절한 게시글"));
-        reportService.reportPost(post.getId(), new ReportRequest(user4.getId(), "부적절한 게시글"));
+        reportService.reportPost(1L, post.getId(), new ReportRequest("부적절한 게시글"));
+        reportService.reportPost(2L, post.getId(), new ReportRequest("부적절한 게시글"));
+        reportService.reportPost(3L, post.getId(), new ReportRequest("부적절한 게시글"));
+        reportService.reportPost(4L, post.getId(), new ReportRequest("부적절한 게시글"));
 
         ReportResponse response = reportService.reportPost(
+                5L,
                 post.getId(),
-                new ReportRequest(user5.getId(), "부적절한 게시글")
+                new ReportRequest("부적절한 게시글")
         );
 
         // then

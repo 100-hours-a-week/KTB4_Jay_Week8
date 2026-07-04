@@ -24,10 +24,13 @@ public class PostDraftService {
     private final PostRepository postRepository;
 
     @Transactional
-    public DraftResponse saveDraft(DraftSaveRequest request) {
-        User user = userReader.getActiveUser(request.getUserId());
+    public DraftResponse saveDraft(
+            Long currentUserId,
+            DraftSaveRequest request
+    ) {
+        User user = userReader.getActiveUser(currentUserId);
 
-        PostDraft draft = postDraftRepository.findByUser_Id(user.getId())
+        PostDraft draft = postDraftRepository.findByUser_Id(currentUserId)
                 .orElseGet(() -> new PostDraft(user, request.getTitle(), request.getContent()));
 
         if (draft.getId() != null) {
@@ -45,8 +48,8 @@ public class PostDraftService {
         );
     }
 
-    public DraftResponse getDraft(Long userId) {
-        PostDraft draft = postDraftRepository.findByUser_Id(userId)
+    public DraftResponse getDraft(Long currentUserId) {
+        PostDraft draft = postDraftRepository.findByUser_Id(currentUserId)
                 .orElseThrow(() -> new NotFoundException("draft_not_found"));
 
         return new DraftResponse(
@@ -59,16 +62,16 @@ public class PostDraftService {
     }
 
     @Transactional
-    public void deleteDraft(Long userId) {
-        PostDraft draft = postDraftRepository.findByUser_Id(userId)
+    public void deleteDraft(Long currentUserId) {
+        PostDraft draft = postDraftRepository.findByUser_Id(currentUserId)
                 .orElseThrow(() -> new NotFoundException("draft_not_found"));
 
         postDraftRepository.delete(draft);
     }
 
     @Transactional
-    public PostResponse publishDraft(Long userId) {
-        PostDraft draft = postDraftRepository.findByUser_Id(userId)
+    public PostResponse publishDraft(Long currentUserId) {
+        PostDraft draft = postDraftRepository.findByUser_Id(currentUserId)
                 .orElseThrow(() -> new NotFoundException("draft_not_found"));
 
         if (draft.getTitle() == null || draft.getTitle().isBlank()) {

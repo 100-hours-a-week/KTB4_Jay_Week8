@@ -23,14 +23,17 @@ public class ReportService {
     private final UserReader userReader;
 
     @Transactional
-    public ReportResponse reportPost(Long postId, ReportRequest request) {
-        if (request.getUserId() == null) {
+    public ReportResponse reportPost(
+            Long currentUserId,
+            Long postId,
+            ReportRequest request) {
+        if (currentUserId == null) {
             throw new BadRequestException("empty_user_id");
         }
         Post post = postReader.getActivePost(postId);
-        User user = userReader.getActiveUser(request.getUserId());
+        User user = userReader.getActiveUser(currentUserId);
 
-        if (reportRepository.existsByPost_IdAndUser_Id(postId, request.getUserId())) {
+        if (reportRepository.existsByPost_IdAndUser_Id(postId, currentUserId)) {
             throw new ConflictException("already_reported");
         }
 

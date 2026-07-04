@@ -7,8 +7,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 public class PostRequest {
-    private Long userId;
-
     @NotBlank(message = "empty_title")
     private String title;
 

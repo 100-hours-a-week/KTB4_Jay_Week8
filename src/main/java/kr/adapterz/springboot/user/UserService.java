@@ -1,7 +1,8 @@
 package kr.adapterz.springboot.user;
 
+import kr.adapterz.springboot.global.security.JwtTokenProvider;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
-import kr.adapterz.springboot.global.exception.UserNotFoundException;
 import kr.adapterz.springboot.global.exception.BadRequestException;
 import kr.adapterz.springboot.global.exception.ConflictException;
 import kr.adapterz.springboot.global.exception.UnauthorizedException;
@@ -17,6 +18,8 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
     private final UserReader userReader;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     public List<GetUserResponse> getUsers() {
         return userRepository.findAll().stream()
@@ -31,15 +34,16 @@ public class UserService {
     }
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())){
+        if (userRepository.existsByEmailAndDeletedAtIsNull(request.getEmail())){
             throw new ConflictException("already_exist_email");
         }
-        if (userRepository.existsByNickname(request.getNickname())){
+        if (userRepository.existsByNicknameAndDeletedAtIsNull(request.getNickname())){
             throw new ConflictException("already_exist_nickname");
         }
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
         User user = new User(
                 request.getEmail(),
-                request.getPassword(),
+                encodedPassword,
                 request.getNickname(),
                 request.getProfileImage()
         );
@@ -50,31 +54,44 @@ public class UserService {
     }
 
     public LoginResponse login(LoginRequest request){
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
                 .orElseThrow(() -> new UnauthorizedException("login_failed"));
 
-        if(!user.getPassword().equals(request.getPassword())){
+        boolean passwordMatched = passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword()
+        );
+
+        if(!passwordMatched){
             throw new UnauthorizedException("login_failed");
         }
 
+        String accessToken = jwtTokenProvider.createAccessToken(
+                user.getId(),
+                user.getEmail()
+        );
+
         return new LoginResponse(
-                "fake-user-Token_" + user.getId(),
+                accessToken,
                 user.getId()
         );
     }
 
     @Transactional
-    public UserUpdateResponse update(UserUpdateRequest request){
+    public UserUpdateResponse update(
+            Long currentUserId,
+            UserUpdateRequest request
+    ){
         if (request.getNickname() == null || request.getNickname().isBlank()){
             throw new BadRequestException("empty_nickname");
         }
         if (request.getProfileImage() == null || request.getProfileImage().isBlank()){
             throw new BadRequestException("empty_profileImage");
         }
-        User user = userReader.getUser(request.getUserId());
+        User user = userReader.getUser(currentUserId);
 
         if (!user.getNickname().equals(request.getNickname())
-                && userRepository.existsByNickname(request.getNickname())) {
+                && userRepository.existsByNicknameAndDeletedAtIsNull(request.getNickname())) {
             throw new ConflictException("already_exist_nickname");
         }
 
@@ -86,15 +103,18 @@ public class UserService {
         );
     }
     @Transactional
-    public void deleteUser(UserDeleteRequest request) {
+    public void deleteUser(Long currentUserId) {
 
-        User user = userReader.getUser(request.getUserId());
+        User user = userReader.getUser(currentUserId);
 
         user.delete();
     }
     @Transactional
-    public void updatePass(UserUpdatePassRequest request){
-        User user = userReader.getUser(request.getUserId());
+    public void updatePass(
+            Long currentUserId,
+            UserUpdatePassRequest request
+    ){
+        User user = userReader.getUser(currentUserId);
 
         if (user.isDeleted()){
             throw new BadRequestException("deleted_user");
