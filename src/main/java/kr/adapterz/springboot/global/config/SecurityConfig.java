@@ -37,11 +37,12 @@ public class SecurityConfig {
                 // authorization filter가 나중에 사용할 규칙표 입니다.
                 // OPTIONS, 회원가입, 로그인은 막지 않고 게시글 상세조회 목록도 로그인 하지 않은 상태로 볼 수 있습니다.
                 // 그 외의 요청은 모두 인가 검사를 합니다.
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(
+                        auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/users/register", "/users/login").permitAll()
+                        .requestMatchers("/users/register", "/users/login", "/users/token/refresh").permitAll()
                         .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().hasRole("USER")
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

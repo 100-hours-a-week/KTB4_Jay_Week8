@@ -34,22 +34,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Header에서 Authorization 값만 뽑아내기
         String authorization = request.getHeader("Authorization");
 
-        // authorization이 비어있거나 해당 값이 Bearer로 시작하지 않는다면 다음 filter 수행합니다..
-        if( authorization == null || !authorization.startsWith("Bearer ")) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Bearer하고 띄어쓰기 하나까지해서 7자이니간 앞에 삭제하고 token값 추출
         String token = authorization.substring(7);
 
-        // 만약 토큰 검증에 실패하면 다음 filter 수행합니다.
-        if(!jwtTokenProvider.validateToken(token)){
-            filterChain.doFilter(request, response);
+        if (jwtTokenProvider.isExpiredToken(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"message\":\"expired_access_token\",\"data\":null}");
+            return;
+        }
+
+        if (!jwtTokenProvider.validateToken(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"message\":\"invalid_access_token\",\"data\":null}");
+            return;
+        }
+
+        String tokenType = jwtTokenProvider.getTokenType(token);
+
+        if (!"access".equals(tokenType)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"message\":\"invalid_access_token\",\"data\":null}");
             return;
         }
 
         Long userId = jwtTokenProvider.getUserId(token);
+
+// 이후 User 조회, principal 생성, Authentication 저장
 
         User user = userRepository.findById(userId)
                 .orElse(null);

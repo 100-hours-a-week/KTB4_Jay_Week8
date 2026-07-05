@@ -28,6 +28,17 @@ public class UserController {
         );
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserMeResponse>> getMe(
+            @AuthenticationPrincipal CustomUserPrincipal customUserPrincipal
+    ){
+        UserMeResponse response = userService.getMe(customUserPrincipal.getUserId());
+
+        return ResponseEntity.ok(
+                new ApiResponse<>("user_me_success", response)
+        );
+    }
+
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<RegisterResponse>> register(
             @Valid @RequestBody RegisterRequest request

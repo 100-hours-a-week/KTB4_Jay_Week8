@@ -1,5 +1,7 @@
 package kr.adapterz.springboot.user;
 
+import kr.adapterz.springboot.auth.RefreshToken;
+import kr.adapterz.springboot.auth.RefreshTokenRepository;
 import kr.adapterz.springboot.global.security.JwtTokenProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +12,7 @@ import kr.adapterz.springboot.user.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -20,6 +23,7 @@ public class UserService {
     private final UserReader userReader;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public List<GetUserResponse> getUsers() {
         return userRepository.findAll().stream()
@@ -32,6 +36,24 @@ public class UserService {
                 ))
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public UserMeResponse getMe(Long currentUserId) {
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new UnauthorizedException("invalid_user"));
+
+        if (user.isDeleted()) {
+            throw new UnauthorizedException("deleted_user");
+        }
+
+        return new UserMeResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getNickname(),
+                user.getProfileImage()
+        );
+    }
+
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
         if (userRepository.existsByEmailAndDeletedAtIsNull(request.getEmail())){
@@ -66,13 +88,30 @@ public class UserService {
             throw new UnauthorizedException("login_failed");
         }
 
+
         String accessToken = jwtTokenProvider.createAccessToken(
                 user.getId(),
                 user.getEmail()
         );
 
+        String refreshToken = jwtTokenProvider.createRefreshToken(
+                user.getId()
+        );
+
+        LocalDateTime refreshTokenExpiresAt = LocalDateTime.now().plusDays(7);
+
+        RefreshToken savedRefreshToken = refreshTokenRepository.findByUser_Id(user.getId())
+                .orElse(null);
+
+        if (savedRefreshToken == null){
+            refreshTokenRepository.save(new RefreshToken(user, refreshToken, refreshTokenExpiresAt));
+        } else {
+            savedRefreshToken.updateToken(refreshToken, refreshTokenExpiresAt);
+        }
+
         return new LoginResponse(
                 accessToken,
+                refreshToken,
                 user.getId()
         );
     }
@@ -102,6 +141,7 @@ public class UserService {
                 user.getProfileImage()
         );
     }
+
     @Transactional
     public void deleteUser(Long currentUserId) {
 
@@ -109,6 +149,7 @@ public class UserService {
 
         user.delete();
     }
+
     @Transactional
     public void updatePass(
             Long currentUserId,
@@ -119,12 +160,21 @@ public class UserService {
         if (user.isDeleted()){
             throw new BadRequestException("deleted_user");
         }
+        boolean currentPasswordMatched = passwordEncoder.matches(
+                request.getCurrentPassword(),
+                user.getPassword()
+        );
+
+        if (!currentPasswordMatched){
+            throw new BadRequestException("wrong_current_password");
+        }
         if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
             throw new BadRequestException("empty_password");
         }
         if (!request.getNewPassword().equals(request.getNewPasswordCheck())) {
             throw new BadRequestException("password_check_not_match");
         }
-        user.changePassword(request.getNewPassword());
+        String encodedPass = passwordEncoder.encode(request.getNewPassword());
+        user.changePassword(encodedPass);
     }
 }

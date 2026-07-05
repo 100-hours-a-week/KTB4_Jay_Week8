@@ -24,4 +24,5 @@ logging:
 
 jwt:
   secret: "adapterz-spring-security-jwt-secret-key-for-practice-123456789"
-  access-token-expiration-millis: 3600000
+  access-token-expiration-millis: 36000000
+  refresh-token-expiration-millis: 604800000

@@ -96,13 +96,13 @@ public class PostService {
     }
     @Transactional
     // 게시글 상세 조회
-    public PostDetailResponse getPostDetail(Long postId, Long userId){
+    public PostDetailResponse getPostDetail(Long postId, Long currentUserId){
         Post post = postReader.getActivePostWithAuthor(postId);
         User author = post.getAuthor();
-        boolean liked = likeRepository.existsByPost_IdAndUser_Id(postId, userId);
+        boolean liked = likeRepository.existsByPost_IdAndUser_Id(postId, currentUserId);
 
-        if (!post.isBlinded()) {
-            increaseViewCount(post, userId);
+        if (!post.isBlinded() && currentUserId != null) {
+            increaseViewCount(post, currentUserId);
         }
 
         if (post.isBlinded()){
@@ -224,9 +224,6 @@ public class PostService {
 
     @Transactional
     private void increaseViewCount(Post post, Long userId) {
-        if (userId == null) {
-            throw new BadRequestException("empty_user_id");
-        }
         // 유저 찾기
         User user = userReader.getActiveUser(userId);
 
