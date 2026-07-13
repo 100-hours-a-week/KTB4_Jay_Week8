@@ -1,6 +1,8 @@
 package kr.adapterz.springboot.global.config;
 
 import kr.adapterz.springboot.global.security.JwtAuthenticationFilter;
+import kr.adapterz.springboot.global.security.handler.CustomAccessDeniedHandler;
+import kr.adapterz.springboot.global.security.handler.CustomAuthenticationEntryPoint;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +20,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -34,6 +38,10 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                )
                 // authorization filter가 나중에 사용할 규칙표 입니다.
                 // OPTIONS, 회원가입, 로그인은 막지 않고 게시글 상세조회 목록도 로그인 하지 않은 상태로 볼 수 있습니다.
                 // 그 외의 요청은 모두 인가 검사를 합니다.
@@ -42,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/users/register", "/users/login", "/users/token/refresh").permitAll()
                         .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
+                                .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().hasRole("USER")
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

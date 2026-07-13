@@ -76,8 +76,12 @@ public class UserService {
     }
 
     public LoginResponse login(LoginRequest request){
-        User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
+        User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UnauthorizedException("login_failed"));
+
+        if (user.isDeleted()){
+            throw new UnauthorizedException("deleted_user");
+        }
 
         boolean passwordMatched = passwordEncoder.matches(
                 request.getPassword(),

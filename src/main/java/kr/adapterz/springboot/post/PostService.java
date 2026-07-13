@@ -94,7 +94,7 @@ public class PostService {
                     .build();
         });
     }
-    @Transactional
+
     // 게시글 상세 조회
     public PostDetailResponse getPostDetail(Long postId, Long currentUserId){
         Post post = postReader.getActivePostWithAuthor(postId);
@@ -222,7 +222,6 @@ public class PostService {
         }
     }
 
-    @Transactional
     private void increaseViewCount(Post post, Long userId) {
         // 유저 찾기
         User user = userReader.getActiveUser(userId);
